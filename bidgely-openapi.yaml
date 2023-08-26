@@ -1,0 +1,1116 @@
+openapi: 3.0.2
+info:
+  title: Bidgely North American North American Read API
+  version: "1.0"
+servers:
+  - url: https://naapi-read.bidgely.com
+tags:
+  - name: auth
+    description: Authorizing Bidgely's api
+  - name: data
+    description: Access your data
+  - name: insights
+    description: Insights from Bidgely's AI system
+paths:
+  /v2.0/user-auth/cipher:
+    get:
+      summary: Provides session id
+      tags: [auth]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidQuery"
+        - name: pilot-id
+          in: query
+          required: true
+          description: Bidgely Pilot ID (not used but required)
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                    description: request uuid
+                    example: 3035a610-bb52-48e7-8378-01209d4de5c6
+                  payload:
+                    type: string
+                    description: sessionID
+                    example: 1605689742299v1DAkZ9QX2gtLeWKQA-jKCUtneyQPSu_CSwKbCCM05ex2qznCUFSLXDch6vz2au2LdLPAMZawrS0eMryXDm2SVMS==
+                  error:
+                    type: string
+                    nullable: true
+                    example: null
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
+  /v2.0/web/web-session/{sessionID}:
+    get:
+      summary: Returns user information and supported measurements
+      tags: [auth]
+      parameters:
+        - $ref: "#/components/parameters/pilotID"
+        - name: clientId
+          in: query
+          required: true
+          description: ID for your energy provider
+          schema:
+            type: string
+            example: hydroottawa-dashboard
+        - name: sessionID
+          in: path
+          required: true
+          description: ID starting with 1605689742299v1
+          schema:
+            type: string
+            minLength: 13
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/defaultResponse"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
+  /v2.0/web/uiConfigs:
+    post:
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/pilotID"
+        - $ref: "#/components/parameters/uidQuery"
+        - name: scoped
+          in: query
+          required: true
+          schema:
+            type: boolean
+            default: false
+        - name: context
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [WEB_DASHBOARD]
+            example: WEB_DASHBOARD
+        - name: colorPaletteThemeType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [color_palette_web]
+        - name: configTagType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [frontend_configs]
+        - name: stringTagType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ui]
+        - name: fuelType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ELECTRIC]
+      responses:
+        "200":
+          description: OK
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
+  /v2.0/dashboard/users/{user-id}/module-tab-info:
+    get:
+      summary: Returns information about unreviewed recommendations
+      tags: [insights]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                    format: uuid
+                    description: uuid for request
+                  payload:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        moduleType:
+                          type: string
+                          default: "RECOMMENDATIONS"
+                        unviewedRecommendationsSize:
+                          type: integer
+                          minimum: 0
+                          example: 3
+                  error:
+                    type: string
+                    nullable: true
+                    example: null
+        "401":
+          $ref: "#/components/responses/unauthorized"
+  /v2.0/dashboard/users/{user-id}/usage-widget-data:
+    get:
+      tags: [data]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/dateFormat"
+        - $ref: "#/components/parameters/locale"
+        - $ref: "#/components/parameters/measurementType"
+        - name: round-values
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/usageWidgetData"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
+  /v2.0/dashboard/users/{user-id}/usage-chart-data:
+    get:
+      tags: [data]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/dateFormat"
+        - $ref: "#/components/parameters/locale"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/mode"
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example:
+          description: Required if mode is not 'year'
+        - name: end
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example:
+          description: Required if mode is not 'year'
+        - name: skip-itemization
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Only used when mode is year
+        - name: skip-ongoing-cycle
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: overide-invoice
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                    format: uuid
+                    description: uuid for request
+                  payload:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/usageChartData"
+                  error:
+                    type: string
+                    nullable: true
+                    example: null
+        "400":
+          $ref: "#/components/responses/defaultError"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "404":
+          $ref: "#/components/responses/defaultError"
+  /v2.0/dashboard/users/{user-id}/usage-chart-details:
+    get:
+      tags: [data]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/dateFormat"
+        - $ref: "#/components/parameters/locale"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/mode"
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+        - name: end
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 1692732634
+        - name: next-bill-cycle
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: skip-ongoing-cycle
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: show-at-granularity
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/usageChartDetails"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+  /v2.0/dashboard/users/{user-id}/itemization-widget-data:
+    get:
+      summary: Returns energy usage by category for previous billing cycle
+      tags: [insights]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: measurement-type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ELECTRIC]
+            default: ELECTRIC
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/dateFormat"
+        - $ref: "#/components/parameters/locale"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/itemizationWidgetData"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
+  /v2.0/dashboard/users/{user-id}/weather-impact:
+    get:
+      summary: Returns location and describes the difference in weather since the last billing period
+      tags: [insights]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/locale"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/weatherImpact"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+  /v2.0/dashboard/users/{user-id}/monthly-summary-widget-data:
+    get:
+      tags: [data]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/dateFormat"
+        - $ref: "#/components/parameters/locale"
+        - name: highest_day_date_format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DAY_WEEK_MONTH_IN_WORDS_DAY_SPACE]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/monthlySummaryWidgetData"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+  /v2.0/dashboard/users/{user-id}/insight-feed-data:
+    get:
+      summary: Generate recommendations and insights
+      tags: [insights]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/dateFormat"
+        - $ref: "#/components/parameters/locale"
+      responses:
+        "200":
+          description: OK
+        "401":
+          $ref: "#/components/responses/unauthorized"
+  /2.1/users/{user-id}/homes/{home-id}/billprojections:
+    get:
+      summary: Projects bill for the current month
+      tags: [insights]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/locale"
+        - $ref: "#/components/parameters/dateFormat"
+        - name: home-id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: round
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: convert-to-kwh
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: skip-if-completed-cycle
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: compute-last-year
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/billProjection"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    uidQuery:
+      name: user-id
+      in: query
+      required: true
+      description: Bidgely User ID
+      schema:
+        type: string
+    uidPath:
+      name: user-id
+      in: path
+      required: true
+      description: Bidgely User ID
+      schema:
+        type: string
+    pilotID:
+      name: pilotId
+      in: query
+      required: true
+      description: Bidgely Pilot ID
+      schema:
+        type: integer
+    dateFormat:
+      name: date-format
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          [FULL_MONTH_IN_WORDS_SPACE_DAY_COMMA_YEAR, MONTH_DAY_SPACE, DATE_TIME]
+    locale:
+      name: locale
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [en_CA, en_US]
+        example: en_CA
+    measurementType:
+      name: measurement-type
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [ELECTRIC, GAS]
+        default: ELECTRIC
+    mode:
+      name: mode
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [year, month, day]
+        default: year
+  responses:
+    unauthorized:
+      description: Authentication Necessary
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: unauthorized
+              error-description:
+                type: string
+                example: Full authentication is required to access this resource
+    defaultError:
+      description: Default error message
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              requestId:
+                type: string
+                format: uuid
+                nullable: true
+                description: uuid for request
+                example: null
+              payload:
+                type: string
+                nullable: true
+                example: null
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum: ["400", "500"]
+                    example: "400"
+                  message:
+                    type: string
+                    nullable: true
+  schemas:
+    defaultResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+          example: 3035a610-bb52-48e7-8378-01209d4de5c6
+        payload:
+          type: object
+        error:
+          type: string
+          nullable: true
+          example: null
+    defaultResponseArray:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+        payload:
+          type: array
+          items:
+            type: object
+        error:
+          type: string
+          nullable: true
+          example: null
+    webSession:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+          example: 3035a610-bb52-48e7-8378-01209d4de5c6
+        payload:
+          type: object
+          properties:
+            pilotID:
+              type: integer
+        error:
+          type: string
+          nullable: true
+          example: null
+    usageWidgetData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+        payload:
+          type: object
+          properties:
+            billStart:
+              type: integer
+              example: 1686024000
+            billEnd:
+              type: integer
+              example: 1688615999
+            billStartDate:
+              type: string
+            billEndDate:
+              type: string
+            billStartDateFormatted:
+              type: string
+              example: "2023-06-06"
+            billEndDateFormatted:
+              type: string
+              example: "2023-07-05"
+            cost:
+              type: integer
+              example: 11
+            consumption:
+              type: integer
+              example: 126
+            previousBillCycleCostDifference:
+              type: integer
+              example: -7
+            previousBillCycleConsumptionDifference:
+              type: integer
+              example: -81
+            previousBillCostDiffPercentage:
+              type: integer
+              minimum: -100
+              maximum: 100
+              example: -39
+            previousBillConsumptionDiffPercentage:
+              type: integer
+              minimum: -100
+              maximum: 100
+              example: -39
+            previousBillCycleCostPercentageDifferenceText:
+              type: string
+              example: "39% Lower"
+            previousBillCycleConsumptionPercentageDifferenceText:
+              type: string
+              example: "39% Lower"
+            previousBillCycleCost:
+              type: number
+            previousBillCycleConsumption:
+              type: number
+            lastYearBillCycleCost:
+              type: number
+              nullable: true
+            lastYearBillCycleConsumption:
+              type: number
+              nullable: true
+            lastYearBillCycleCostDifference:
+              type: number
+              nullable: true
+            lastYearBillCycleConsumptionDifference:
+              type: number
+              nullable: true
+            lastYearBillCostDiffPercentage:
+              type: integer
+              nullable: true
+              minimum: -100
+              maximum: 100
+            lastYearBillConsumptionDiffPercentage:
+              type: integer
+              nullable: true
+              minimum: -100
+              maximum: 100
+            shcAvgCost:
+              type: number
+              nullable: true
+            shcAvgCostDifference:
+              type: number
+              nullable: true
+            budget:
+              type: number
+              nullable: true
+            budgetDifference:
+              type: number
+              nullable: true
+            solarUser:
+              type: boolean
+              example: false
+            lastYearCostPercentageDifferenceText:
+              type: string
+            lastYearConsumptionPercentageDifferenceText:
+              type: string
+        error:
+          type: string
+          nullable: true
+          example: null
+    usageChartData:
+      type: object
+      properties:
+        intervalStart:
+          type: integer
+        intervalEnd:
+          type: integer
+        intervalStartDate:
+          type: string
+          example: "June 6, 2020"
+        intervalEndDate:
+          type: string
+          example: "June 6, 2020"
+        intervalStartDateFormatted:
+          type: string
+          example: "June 6, 2020"
+        intervalEndDateFormatted:
+          type: string
+          example: "June 6, 2020"
+        cost:
+          type: number
+          nullable: true
+        consumption:
+          type: number
+          nullable: true
+        isWeekend:
+          type: boolean
+        itemizationDetailsList:
+          type: array
+          items:
+            type: object
+        touDetails:
+          type: object
+          nullable: true
+        tierDetails:
+          type: object
+          nullable: true
+        temperature:
+          type: integer
+          example: 18
+        isOngoingInterval:
+          type: boolean
+        isMissingDataInterval:
+          type: boolean
+        isTimestampPresent:
+          type: boolean
+          nullable: true
+        isBoundaryInterval:
+          type: boolean
+        peakDemand:
+          type: number
+          nullable: true
+        peakDemandCharges:
+          type: number
+          nullable: true
+        solarUser:
+          type: boolean
+        seasonalBillCycle:
+          type: boolean
+        estimatedConsumption:
+          type: number
+          nullable: true
+        solarGeneration:
+          type: number
+          nullable: true
+        userType:
+          type: string
+          example: "GB"
+        miscCharges:
+          type: array
+          items:
+            type: number
+          nullable: true
+        energyCharges:
+          type: number
+          nullable: true
+        nonRoundTotalCost:
+          type: number
+          nullable: true
+        fixedChargeApplicable:
+          type: boolean
+    usageChartDetails:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+        payload:
+          type: object
+          properties:
+            usageChartDataList:
+              type: array
+              items:
+                $ref: "#/components/schemas/usageChartData"
+            fixedChargeMetaData:
+              type: object
+              properties:
+                isFixedChargeApplicable:
+                  type: boolean
+                  nullable: true
+                  example: null
+            billCycleMetaData:
+              type: boolean
+              example: false
+        error:
+          type: string
+          nullable: true
+          example: null
+    itemizationCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 0
+          example: 8
+        category:
+          type: string
+          example: "alwaysOn"
+        usage:
+          type: integer
+          minimum: 0
+          example: 52
+        cost:
+          type: integer
+          minimum: 0
+          example: 5
+        percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 41
+        costPercentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 41
+        attributes:
+          type: object
+    itemizationWidgetData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+        payload:
+          type: object
+          properties:
+            itemizationDetails:
+              type: object
+              properties:
+                startTs:
+                  type: integer
+                  example: 1686024000
+                endTs:
+                  type: integer
+                  example: 1688615999
+                startDate:
+                  type: string
+                  example: "June 6, 2023"
+                endDate:
+                  type: string
+                  example: "July 5, 2023"
+                startDateFormatted:
+                  type: string
+                  example: "2023-06-06"
+                endDateFormatted:
+                  type: string
+                  example: "2023-07-05"
+                electric:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/itemizationCategory"
+                  nullable: true
+                context:
+                  type: object
+                  properties:
+                    electricity:
+                      type: object
+                      properties:
+                        statistical:
+                          type: boolean
+                          example: false
+                        invoicePresent:
+                          type: boolean
+                          example: true,
+                        errorCode:
+                          type: integer
+                          example: 1
+                        percentage:
+                          type: boolean
+                          example: true
+                    gas:
+                      type: object
+                      nullable: true
+                      example: null
+            itemizationDisclaimer:
+              type: string
+              example: "Energy breakdown amounts are approximate and rounded to the nearest dollar"
+            invoiceCost:
+              type: integer
+              example: 11
+            solarUser:
+              type: boolean
+              example: false
+            miscCharges:
+              type: array
+              items:
+                type: number
+              nullable: true
+              example: null
+            peakDemandCharges:
+              type: integer
+              nullable: true
+              example: null
+            energyCharges:
+              type: number
+              example: 10.958519950974733
+        error:
+          type: string
+          nullable: true
+          example: null
+    weatherImpact:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+        payload:
+          type: object
+          properties:
+            location:
+              type: string
+              example: "OTTAWA, ON"
+            weatherImpactSummary:
+              type: string
+              example: "5°C Warmer than the previous bill period"
+        error:
+          type: string
+          nullable: true
+          example: null
+    monthlySummaryWidgetData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+        payload:
+          type: object
+          properties:
+            itemizationDetails:
+              type: object
+              properties:
+                startTs:
+                  type: integer
+                  example: 1686024000
+                endTs:
+                  type: integer
+                  example: 1688615999
+                startDate:
+                  type: string
+                  example: "June 6, 2023"
+                endDate:
+                  type: string
+                  example: "July 5, 2023"
+                startDateFormatted:
+                  type: string
+                  example: "2023-06-06"
+                endDateFormatted:
+                  type: string
+                  example: "2023-07-05"
+                electric:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/itemizationCategory"
+                  nullable: true
+                context:
+                  type: object
+                  properties:
+                    electricity:
+                      type: object
+                      properties:
+                        statistical:
+                          type: boolean
+                          example: false
+                        invoicePresent:
+                          type: boolean
+                          example: true,
+                        errorCode:
+                          type: integer
+                          example: 1
+                        percentage:
+                          type: boolean
+                          example: true
+                    gas:
+                      type: object
+                      nullable: true
+                      example: null
+            itemizationDisclaimer:
+              type: string
+              example: "Energy breakdown amounts are approximate and rounded to the nearest dollar"
+            costost:
+              type: integer
+              example: 11
+            estimatedConsumption:
+              type: integer
+              minimum: 0
+              example: 126
+            highestWeekdayConsumptionDate:
+              type: string
+              example: "Friday 30 Jun"
+            highestWeekendConsumptionDate:
+              type: string
+              example: "Saturday 1 Jul"
+            previousBillStart:
+              type: integer
+              example: 1683345600
+            previousBillEnd:
+              type: integer
+              example: 1686024000
+            nextBillStart:
+              type: integer
+              nullable: true
+              example: null
+            nextBillEnd:
+              type: integer
+              nullable: true
+              example: null
+            solarUser:
+              type: boolean
+              example: false
+            miscCharges:
+              type: array
+              items:
+                type: number
+              nullable: true
+              example: null
+            peakDemandCharges:
+              type: integer
+              nullable: true
+              example: null
+            energyCharges:
+              type: number
+              example: 10.958519950974733
+        error:
+          type: string
+          nullable: true
+          example: null
+    billProjection:
+      type: object
+      properties:
+        projectionPrice:
+          type: number
+        budgetThresholdAmount:
+          type: number
+          nullable: true
+        currentPrice:
+          type: number
+        averageBillingPrice:
+          type: number
+        averageBillingConsumption:
+          type: number
+        projectionStatus:
+          type: number
+        projectionConsumption:
+          type: number
+        currentConsumption:
+          type: number
+        daysLeft:
+          type: integer
+          minimum: 0
+        billStart:
+          type: integer
+          minimum: 0
+        billEnd:
+          type: integer
+          minimum: 0
+        billStartDate:
+          type: string
+        billEndDate:
+          type: string
+        billStartDateFormatted:
+          type: string
+        billEndDateFormatted:
+          type: string
+        lastBillPrice:
+          type: number
+          nullable: true
+        previousYearBillPrice:
+          type: number
+          nullable: true
+        lastBillPriceDifference:
+          type: number
+          nullable: true
+        previousYearBillPriceDifference:
+          type: number
+          nullable: true

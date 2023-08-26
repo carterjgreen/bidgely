@@ -1,0 +1,16 @@
+on:
+  pull_request:
+    paths:
+      - "bidgely-openapi.yaml"
+
+jobs:
+  test_swagger_editor_validator_remote:
+    runs-on: ubuntu-latest
+    name: Swagger Editor Validator Remote
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Validate OpenAPI definition
+        uses: char0n/apidom-validate@v1
+        with:
+          definition-file: bidgely-openapi.yaml

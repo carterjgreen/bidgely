@@ -1,0 +1,6 @@
+{
+    "python.linting.enabled": false,
+    "ruff.args": [
+        "--config=pyproject.toml"
+    ]
+}

@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "bidgely"
+version = "0.1.0"
+license = "Apache-2.0"
+description = "A python library for downloading your historical data fromutilities that use Bidgely"
+authors = ["Carter Green <carter.green@icloud.com>"]
+readme = "README.md"
+
+[project.urls]
+"Homepage" = "https://github.com/carterjgreen/bidgely"
+"Bug Tracker" = "https://github.com/carterjgreen/bidgely/issues"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiohttp = "^3.8.5"
+boto3 = "^1.26.32"
+py3rijndael = "^0.3.3"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.5.1"
+black = "^23.7.0"
+ruff = "^0.0.285"
+flake8 = "^6.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py311"
