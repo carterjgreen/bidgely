@@ -19,7 +19,7 @@ More [here](https://www.bidgely.com/customers/)
 To add support for a new utility that uses the Bidgely NA API (you can tell if the energy dashboard of your utility makes network requests to naapi-read.bidgely.com in the network tab of your browser's developer tools) add a file similar to
 [hydroottawa.py](https://github.com/carterjgreen/bidgely/blob/main/src/opower/utilities/pge.py)
 
-Name the file after the utility website, e.g. pge.py for pge.com.
+Name the file after the utility , e.g. hydroottawa.py for Hydro Ottawa or bchydro.py for BC Hydro.
 
 Since this library is planned to be used by Home Assistant, then per <https://github.com/home-assistant/architecture/blob/master/adr/0004-webscraping.md> we cannot have a dependency on a headless browser and we can only parse HTML during login.
 
