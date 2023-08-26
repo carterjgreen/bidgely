@@ -31,6 +31,6 @@ See [demo.py](https://github.com/carterjgreen/bidgely/blob/main/examples/demo.py
 
 ## Thank you
 
-Inspired by opower by @tronikos
+Inspired by opower by [@tronikos](https://www.github.com/tronikos)
 
-Async pycognito sign in from @dotKrad
+Async pycognito sign in from [@dotKrad](https://www.github.com/dotKrad)
