@@ -11,7 +11,7 @@ from py3rijndael import RijndaelCbc, ZeroPadding
 from .aws_srp import AWSSRP
 from .base import UtilityBase
 
-# from ..exceptions import InvalidAuth
+from ..exceptions import InvalidAuth
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -95,9 +95,9 @@ class HydroOttawa(UtilityBase):
                     logging.debug(f"Successful token retrieved for user-id: {user_id}")
                 else:
                     logging.debug(f"Bidgely login failed for {username}")
-                    raise Exception()  # InvalidAuth
+                    raise InvalidAuth()  # InvalidAuth
             else:
                 logging.debug(f"Bidgely login failed for {username}")
-                raise Exception("Invalid Auth")  # InvalidAuth()
+                raise InvalidAuth()  # InvalidAuth()
 
         return (user_id, bearer_token)

@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta
 
 import aiohttp
+
 from bidgely import AggregateType, Bidgely
 
 BIDGELY_URL = "https://naapi-read.bidgely.com"
@@ -19,12 +20,14 @@ async def _main() -> None:
         default="HydroOttawa",
     )
     parser.add_argument(
+        "-u",
         "--username",
         help="Username for logging into the utility's website. "
         "If not provided, you will be asked for it",
         required=True,
     )
     parser.add_argument(
+        "-p",
         "--password",
         help="Password for logging into the utility's website.",
         required=True,
