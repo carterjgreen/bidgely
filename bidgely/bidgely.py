@@ -306,8 +306,10 @@ class Bidgely:
                         items = None
                     result.append(
                         CostRead(
-                            start_time=read["intervalStartDate"],
-                            end_time=read["intervalEndDate"],
+                            start_time=datetime.fromisoformat(
+                                read["intervalStartDate"]
+                            ),
+                            end_time=datetime.fromisoformat(read["intervalEndDate"]),
                             consumption=read["consumption"],
                             cost=read["cost"],
                             temperature=read["temperature"],
