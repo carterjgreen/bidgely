@@ -1,3 +1,5 @@
+name: Validate OpenAPI
+
 on:
   pull_request:
     paths:
