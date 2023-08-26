@@ -12,7 +12,7 @@ from aiohttp.web_exceptions import HTTPServerError
 from .exceptions import CannotConnect, InvalidAuth
 from .utilities.base import UtilityBase
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 DEBUG_LOG_RESPONSE = False
 
 
@@ -234,7 +234,7 @@ class Bidgely:
         async with self.session.get(url, params=ps, headers=h) as resp:
             result = await resp.json()
             if DEBUG_LOG_RESPONSE:
-                logging.debug(f"Fetched: {json.dumps(result, indent=2)}")
+                logger.debug(f"Fetched: {json.dumps(result, indent=2)}")
             if resp.status == 200:
                 forecast = Forecast(
                     start_date=date.fromisoformat(result["billStartDateFormatted"]),
@@ -248,7 +248,7 @@ class Bidgely:
                     typical_cost=result["averageBillingPrice"],
                 )
             else:
-                logging.debug(f"Have you entered the correct home? home={home}")
+                logger.debug(f"Have you entered the correct home? home={home}")
                 raise HTTPServerError
 
         return forecast
@@ -283,8 +283,8 @@ class Bidgely:
             async with self.session.get(url, params=ps, headers=h) as resp:
                 reads = await resp.json()
                 if DEBUG_LOG_RESPONSE:
-                    logging.debug(f"Fetched: {json.dumps(result, indent=2)}")
-                logging.debug(f"Successful read from Bidgely for user: {self.user_id}")
+                    logger.debug(f"Fetched: {json.dumps(result, indent=2)}")
+                logger.debug(f"Successful read from Bidgely for user: {self.user_id}")
                 for read in reads["payload"]:
                     if (
                         not skip_itemization
@@ -316,7 +316,7 @@ class Bidgely:
                     )
         except ClientResponseError as err:
             if err.status in (401, 403):
-                logging.debug("Failed to read data from Bidgely due to InvalidAuth")
+                logger.debug("Failed to read data from Bidgely due to InvalidAuth")
                 raise InvalidAuth(err)
             else:
                 raise CannotConnect(err)

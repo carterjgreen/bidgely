@@ -13,7 +13,7 @@ from .base import UtilityBase
 
 from ..exceptions import InvalidAuth
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
 def createBidgelyPayload(accountID: str, accessToken: str, refreshToken: str):
@@ -92,12 +92,12 @@ class HydroOttawa(UtilityBase):
                 user_id = r.group(1)
                 bearer_token = r.group(2)
                 if user_id is not None and bearer_token is not None:
-                    logging.debug(f"Successful token retrieved for user-id: {user_id}")
+                    logger.debug(f"Successful token retrieved for user-id: {user_id}")
                 else:
-                    logging.debug(f"Bidgely login failed for {username}")
+                    logger.debug(f"Bidgely login failed for {username}")
                     raise InvalidAuth()  # InvalidAuth
             else:
-                logging.debug(f"Bidgely login failed for {username}")
+                logger.debug(f"Bidgely login failed for {username}")
                 raise InvalidAuth()  # InvalidAuth()
 
         return (user_id, bearer_token)
