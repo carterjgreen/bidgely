@@ -8,8 +8,9 @@ from typing import Optional
 import aiohttp
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web_exceptions import HTTPServerError
-from exceptions import CannotConnect, InvalidAuth
-from utilities.base import UtilityBase
+
+from .exceptions import CannotConnect, InvalidAuth
+from .utilities.base import UtilityBase
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 DEBUG_LOG_RESPONSE = False
