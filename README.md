@@ -1,6 +1,6 @@
 # Bidgely
 
-A Python library for getting historical and forecasted usage/cost from utilities that use opower.com such as PG&amp;E.
+A Python library for getting historical and forecasted usage/cost from utilities that use Bidgely such as Hydro Ottawa.
 
 Supported utilities:
 
