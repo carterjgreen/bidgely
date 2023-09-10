@@ -3,7 +3,6 @@ import json
 import logging
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional
 
 import aiohttp
 from aiohttp.client_exceptions import ClientResponseError
@@ -67,21 +66,10 @@ class MeasurementCategory(Enum):
     REFRIGERATION = "refrigeration"
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True)
 class Forecast:
     """Forecast data for an account."""
 
-    __slots__ = [
-        "start_date",
-        "end_date",
-        "unit_of_measure",
-        "usage_to_date",
-        "cost_to_date",
-        "forecasted_usage",
-        "forecasted_cost",
-        "typical_usage",
-        "typical_cost",
-    ]
     start_date: date
     end_date: date
     unit_of_measure: UnitOfMeasure
@@ -106,11 +94,10 @@ class Forecast:
         return s
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True)
 class Itemization:
     """Itemization of energy usage"""
 
-    __slots__ = ["id", "category", "usage", "cost", "percentage", "cost_percentage"]
     id: int
     category: MeasurementCategory
     usage: int
@@ -119,24 +106,16 @@ class Itemization:
     cost_percentage: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True)
 class CostRead:
     """A read from the meter that has both consumption and cost data."""
 
-    __slots__ = [
-        "start_time",
-        "end_time",
-        "consumption",
-        "cost",
-        "temperature",
-        "itemization",
-    ]
     start_time: datetime
     end_time: datetime
     consumption: float
     cost: float
-    temperature: Optional[int]
-    itemization: Optional[list[Itemization]]
+    temperature: int | None
+    itemization: list[Itemization] | None
 
     def __add__(self, other):
         return CostRead(
@@ -186,15 +165,15 @@ class Bidgely:
         utility: str,
         username: str,
         password: str,
-        account_id: Optional[str],
+        account_id: str | None,
     ) -> None:
         self.session: aiohttp.ClientSession = session
         self.utility: type[UtilityBase] = _select_utility(utility)
         self.username: str = username
         self.password: str = password
-        self.account_id: Optional[str] = account_id
-        self.user_id: Optional[str] = None
-        self.access_token: Optional[str] = None
+        self.account_id: str | None = account_id
+        self.user_id: str | None = None
+        self.access_token: str | None = None
         return None
 
     async def async_login(self) -> None:
@@ -257,9 +236,9 @@ class Bidgely:
         self,
         measurement: str,
         mode: str,
-        start: Optional[datetime] = datetime.fromtimestamp(967231641),
-        end: Optional[datetime] = datetime.now(),
-        skip_itemization: Optional[bool] = True,
+        start: datetime | None = datetime.fromtimestamp(967231641),
+        end: datetime | None = datetime.now(),
+        skip_itemization: bool | None = True,
     ) -> list[CostRead]:
         url = (
             "https://naapi-read.bidgely.com"
