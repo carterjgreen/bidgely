@@ -11,6 +11,7 @@ Possible Supports:
 - BC Hydro
 - NS Power
 - Hydro One
+- Public Service Electric and Gas (PSE&G)
 
 More [here](https://www.bidgely.com/customers/)
 

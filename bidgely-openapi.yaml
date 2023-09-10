@@ -11,7 +11,234 @@ tags:
     description: Access your data
   - name: insights
     description: Insights from Bidgely's AI system
+  - name: no-hydro-ottawa
+    description: Endpoints that aren't used for Hydro Ottawa users
 paths:
+  /v2.0/users/{user-id}:
+    get:
+      summary: Get rates for a user
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+      responses:
+        "200":
+          description: OK
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
+  /billingdata/users/{user-id}/homes/{home-id}/billingcycles:
+    get:
+      summary: Unknown
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/locale"
+        - $ref: "#/components/parameters/home-id"
+        - name: t0
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: t1
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+  /billingdata/users/{user-id}/homes/{home-id}/utilitydata:
+    get:
+      summary: Unknown
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/locale"
+        - $ref: "#/components/parameters/home-id"
+        - name: t0
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: t1
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+  /billingdata/users/{user-id}/homes/{home-id}/usagedata:
+    get:
+      summary: Unknown
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/measurementType"
+        - $ref: "#/components/parameters/locale"
+        - $ref: "#/components/parameters/home-id"
+        - name: t0
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: t1
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+  /billingdata/users/{user-id}/homes/{home-id}/aggregatedCost/{appId}/{cType}:
+    get:
+      summary: Unknown
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/home-id"
+        - $ref: "#/components/parameters/mode"
+        - name: appId
+          in: path
+          description: Appliance ID
+          required: true
+          schema:
+            type: integer
+        - name: cType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [billing_cost, rate_category]
+        - name: tz
+          in: query
+          description: Timezone
+          required: true
+          schema:
+            type: string
+            default: America/Toronto
+        - name: planNumber
+          in: query
+          required: true
+          schema:
+            type: integer
+            enum: [190, 191, 580]
+        - name: t0
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: t1
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+  /streams/users/{user-id}/homes/{home-id}/tbappdata/monthly.json:
+    get:
+      summary: Get disaggregated data for different appliances
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/home-id"
+        - name: t0
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: t1
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+  /streams/users/{user-id}/homes/{home-id}/gws/2/gb.json:
+    get:
+      summary: Get disaggregated data for different appliances
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/home-id"
+        - name: t0
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: t1
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+  /v2.0/dashboard/users/{user-id}/appliance-name-mapping:
+    get:
+      summary: Get appliance mappings
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+        - $ref: "#/components/parameters/locale"
+      responses:
+        "200":
+          description: OK
+  /v2.0/users/{user-id}/endpoints:
+    get:
+      description: Get user endpoint
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/uidPath"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/endpoint"
+
   /v2.0/user-auth/cipher:
     get:
       summary: Provides session id
@@ -523,6 +750,14 @@ components:
         type: string
         enum: [year, month, day]
         default: year
+    home-id:
+      name: home-id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
   responses:
     unauthorized:
       description: Authentication Necessary
@@ -1114,3 +1349,27 @@ components:
         previousYearBillPriceDifference:
           type: number
           nullable: true
+    endpoint:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: uuid for request
+        payload:
+          type: array
+          items:
+            type: object
+            properties:
+              endpointId:
+                type: string
+              measurementType:
+                type: string
+                enum: ["ELECTRICITY", "GAS"]
+              profile:
+                type: string
+                enum: ["ami"]
+        error:
+          type: string
+          nullable: true
+          example: null
