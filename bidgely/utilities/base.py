@@ -1,11 +1,11 @@
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 
 
 # https://www.bidgely.com/customers/
 class UtilityBase:
-    "Base Class for a Bidgely customer"
+    "Base Class for a Bidgely customer."
 
     subclasses: list[type["UtilityBase"]] = []
 
@@ -29,8 +29,8 @@ class UtilityBase:
         session: aiohttp.ClientSession,
         username: str,
         password: str,
-        optional_account_id: Optional[str],
-    ) -> Optional[str]:
+        optional_account_id: str | None,
+    ) -> str | None:
         """Login to the utility website.
 
         Return the Opower access token or None
