@@ -1,6 +1,5 @@
 import logging
 
-from .exceptions import CannotConnect, InvalidAuth
 from .bidgely import (
     AggregateType,
     Bidgely,
@@ -9,10 +8,12 @@ from .bidgely import (
     UnitOfMeasure,
     get_supported_utilities,
 )
+from .exceptions import CannotConnect, InvalidAuth
 
 __all__ = [
     "AggregateType",
-    "Bidgely" "CannotConnect",
+    "Bidgely",
+    "CannotConnect",
     "CostRead",
     "Forecast",
     "InvalidAuth",

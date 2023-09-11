@@ -1,4 +1,6 @@
+import asyncio
 import dataclasses
+from itertools import chain
 import json
 import logging
 from datetime import date, datetime, timedelta
@@ -325,7 +327,7 @@ class Bidgely:
                 )
             case AggregateType.DAY:
                 n_months = (end - start).days // 30
-                result = []
+                tasks = []
                 for i in range(n_months):
                     months = 30 * (i + 1)
                     single = await self.async_fetch(
@@ -334,19 +336,23 @@ class Bidgely:
                         start,
                         start + timedelta(days=months),
                     )
-                    result += single
+                    tasks.append(single)
+                result = await asyncio.gather(*tasks)
+                results = list(chain(*result))
             case AggregateType.HOUR:
                 n_days = (end - start).days
-                result = []
+                tasks = []
                 for i in range(n_days):
-                    single = await self.async_fetch(
+                    single = self.async_fetch(
                         measurement,
                         mode,
                         start,
                         start + timedelta(days=i + 1),
                     )
-                    result += single
-        return result
+                    tasks.append(single)
+                result = await asyncio.gather(*tasks)
+                results = list(chain(*result))
+        return results
 
     async def async_get_breakdown(
         self,
