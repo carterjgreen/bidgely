@@ -8,10 +8,10 @@ import aiohttp
 import boto3
 from py3rijndael import RijndaelCbc, ZeroPadding
 
+from bidgely.exceptions import InvalidAuth
+
 from .aws_srp import AWSSRP
 from .base import UtilityBase
-
-from ..exceptions import InvalidAuth
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def createBidgelyPayload(accountID: str, accessToken: str, refreshToken: str):
             "requestType": "",
             "identityType": "cognito",
             "impersonator": "",
-        }
+        },
     )
 
 
@@ -43,7 +43,7 @@ def createBidelyToken(payload):
 
 
 class HydroOttawa(UtilityBase):
-    "Hydro Ottawa"
+    "Hydro Ottawa."
 
     @staticmethod
     def name() -> str:
@@ -57,11 +57,17 @@ class HydroOttawa(UtilityBase):
 
     @staticmethod
     async def async_login(
-        session: aiohttp.ClientSession, username: str, password: str, account_id: str
+        session: aiohttp.ClientSession,
+        username: str,
+        password: str,
+        account_id: str,
     ) -> tuple[str, str]:
-        "Returns user-id and token for Bidgely"
+        "Returns user-id and token for Bidgely."
         client = await session.loop.run_in_executor(
-            None, boto3.client, "cognito-idp", "ca-central-1"
+            None,
+            boto3.client,
+            "cognito-idp",
+            "ca-central-1",
         )
         aws = AWSSRP(
             username=username,
@@ -75,7 +81,9 @@ class HydroOttawa(UtilityBase):
         auth_result = tokens["AuthenticationResult"]
 
         payload = createBidgelyPayload(
-            account_id, auth_result["AccessToken"], auth_result["RefreshToken"]
+            account_id,
+            auth_result["AccessToken"],
+            auth_result["RefreshToken"],
         )
         bidgely_token = createBidelyToken(payload)
 
@@ -95,9 +103,9 @@ class HydroOttawa(UtilityBase):
                     logger.debug(f"Successful token retrieved for user-id: {user_id}")
                 else:
                     logger.debug(f"Bidgely login failed for {username}")
-                    raise InvalidAuth()  # InvalidAuth
+                    raise InvalidAuth  # InvalidAuth
             else:
                 logger.debug(f"Bidgely login failed for {username}")
-                raise InvalidAuth()  # InvalidAuth()
+                raise InvalidAuth  # InvalidAuth()
 
         return (user_id, bearer_token)
