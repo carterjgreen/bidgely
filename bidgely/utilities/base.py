@@ -1,18 +1,10 @@
-from typing import Any
-
 import aiohttp
+from pydantic import BaseModel
 
 
 # https://www.bidgely.com/customers/
-class UtilityBase:
+class UtilityBase(BaseModel):
     "Base Class for a Bidgely customer."
-
-    subclasses: list[type["UtilityBase"]] = []
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Keep track of all subclass implementations."""
-        super().__init_subclass__(**kwargs)
-        cls.subclasses.append(cls)
 
     @staticmethod
     def name() -> str:
@@ -29,8 +21,8 @@ class UtilityBase:
         session: aiohttp.ClientSession,
         username: str,
         password: str,
-        optional_account_id: str | None,
-    ) -> str | None:
+        account_id: str,
+    ) -> tuple[str, str]:
         """Login to the utility website.
 
         Return the Opower access token or None

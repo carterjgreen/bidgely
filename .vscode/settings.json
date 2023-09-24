@@ -1,6 +1,7 @@
 {
-    "python.linting.enabled": false,
     "ruff.args": [
         "--config=pyproject.toml"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.linting.flake8Enabled": false,
 }

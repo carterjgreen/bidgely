@@ -16,12 +16,14 @@ from .base import UtilityBase
 logger = logging.getLogger(__name__)
 
 
-def createBidgelyPayload(accountID: str, accessToken: str, refreshToken: str):
+def create_bidgely_payload(
+    account_id: str, access_token: str, refresh_token: str
+) -> OrderedDict[str, str]:
     return OrderedDict(
         {
-            "accountId": accountID,
-            "accessToken": accessToken,
-            "refreshToken": refreshToken,
+            "accountId": account_id,
+            "accessToken": access_token,
+            "refreshToken": refresh_token,
             "language": "en",
             "requestType": "",
             "identityType": "cognito",
@@ -30,7 +32,7 @@ def createBidgelyPayload(accountID: str, accessToken: str, refreshToken: str):
     )
 
 
-def createBidelyToken(payload):
+def create_bidgely_token(payload: OrderedDict[str, str]) -> str:
     cipher = RijndaelCbc(
         key="tG@$=gQGyu_Lcqvt/4Vb6y4sWV6j-VmC",
         iv="%rAn_BLzP+JwAAGGXe5PQ(ZrBgtpfUzq",
@@ -80,12 +82,12 @@ class HydroOttawa(UtilityBase):
         tokens = await aws.authenticate_user()
         auth_result = tokens["AuthenticationResult"]
 
-        payload = createBidgelyPayload(
+        payload = create_bidgely_payload(
             account_id,
             auth_result["AccessToken"],
             auth_result["RefreshToken"],
         )
-        bidgely_token = createBidelyToken(payload)
+        bidgely_token = create_bidgely_token(payload)
 
         body = {"sessionToken": bidgely_token}
 
@@ -97,9 +99,9 @@ class HydroOttawa(UtilityBase):
             if resp.status == 302:
                 bidgely_url = resp.headers["Location"]
                 r = re.search("uuid=(.*)&token=(.*)&sso-token", bidgely_url)
-                user_id = r.group(1)
-                bearer_token = r.group(2)
-                if user_id is not None and bearer_token is not None:
+                if r is not None:
+                    user_id = r.group(1)
+                    bearer_token = r.group(2)
                     logger.debug(f"Successful token retrieved for user-id: {user_id}")
                 else:
                     logger.debug(f"Bidgely login failed for {username}")

@@ -89,11 +89,12 @@ async def _main() -> None:
             start=datetime.now() - timedelta(days=29)
         )
         print(f"Usage from {items[0].start_time} to {items[0].end_time}")
-        for item in items[0].itemization:
-            print(
-                f"Category: {item.category:>15} Usage: {item.usage:3} kWh",
-                f"Cost: ${item.cost}",
-            )
+        if items[0].itemization is not None:
+            for item in items[0].itemization:
+                print(
+                    f"Category: {item.category:>15} Usage: {item.usage:3} kWh",
+                    f"Cost: ${item.cost}",
+                )
 
 
 asyncio.run(_main())
