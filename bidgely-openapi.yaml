@@ -4,6 +4,7 @@ info:
   version: "1.0"
 servers:
   - url: https://naapi-read.bidgely.com
+  - url: https://gpcsmbuatapi.bidgely.com # Unsure if this works
 tags:
   - name: auth
     description: Authorizing Bidgely's api

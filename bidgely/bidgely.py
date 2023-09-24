@@ -1,12 +1,12 @@
 import asyncio
-import dataclasses
-from itertools import chain
 import json
 import logging
 from datetime import date, datetime, timedelta
 from enum import Enum
+from itertools import chain
 
 import aiohttp
+from pydantic.dataclasses import dataclass
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web_exceptions import HTTPServerError
 
@@ -67,8 +67,12 @@ class MeasurementCategory(Enum):
     OTHER = "other"
     REFRIGERATION = "refrigeration"
 
+    def __str__(self) -> str:
+        """Return the value of the enum."""
+        return self.value
 
-@dataclasses.dataclass(slots=True)
+
+@dataclass(slots=True)
 class Forecast:
     """Forecast data for an account."""
 
@@ -96,7 +100,7 @@ class Forecast:
         return s
 
 
-@dataclasses.dataclass(slots=True)
+@dataclass(slots=True)
 class Itemization:
     """Itemization of energy usage"""
 
@@ -108,37 +112,46 @@ class Itemization:
     cost_percentage: int
 
 
-@dataclasses.dataclass(slots=True)
+@dataclass(slots=True)
 class CostRead:
     """A read from the meter that has both consumption and cost data."""
 
     start_time: datetime
     end_time: datetime
-    consumption: float
-    cost: float
+    consumption: float | None
+    cost: float | None
     temperature: int | None
     itemization: list[Itemization] | None
 
-    def __add__(self, other):
-        return CostRead(
-            start_time=min(self.start_time, other.start_time),
-            end_time=max(self.end_time, other.end_time),
-            consumption=self.consumption + other.consumption,
-            cost=self.cost + other.cost,
-            temperature=None,
-            itemization=None,
-        )
+    def __add__(self, other: "CostRead") -> "CostRead":
+        if (
+            isinstance(self.consumption, float)
+            and isinstance(other.consumption, float)
+            and isinstance(self.cost, float)
+            and isinstance(other.cost, float)
+        ):
+            output = CostRead(
+                start_time=min(self.start_time, other.start_time),
+                end_time=max(self.end_time, other.end_time),
+                consumption=self.consumption + other.consumption,
+                cost=self.cost + other.cost,
+                temperature=None,
+                itemization=None,
+            )
+            return output
+        else:
+            raise ValueError
 
-    def __lt__(self, other):
+    def __lt__(self, other: "CostRead") -> bool:
         return self.start_time < other.start_time
 
 
 def get_supported_utilities() -> list[type["UtilityBase"]]:
     """Return a list of all supported utilities."""
-    return [cls for cls in UtilityBase.subclasses]
+    return [cls for cls in UtilityBase.__subclasses__()]
 
 
-def _aggregate_to_mode(agg: AggregateType) -> str:
+def _aggregate_to_mode(agg: AggregateType | str) -> str:
     """Translate aggregate into mode for Bidgely API"""
     match agg:
         case AggregateType.MONTH:
@@ -152,7 +165,7 @@ def _aggregate_to_mode(agg: AggregateType) -> str:
 
 def _select_utility(name: str) -> type[UtilityBase]:
     """Return the utility with the given name."""
-    for utility in UtilityBase.subclasses:
+    for utility in UtilityBase.__subclasses__():
         if name.lower() in [utility.name().lower(), utility.__name__.lower()]:
             return utility
     raise ValueError(f"Utility {name} not found")
@@ -167,13 +180,13 @@ class Bidgely:
         utility: str,
         username: str,
         password: str,
-        account_id: str | None,
+        account_id: str,
     ) -> None:
         self.session: aiohttp.ClientSession = session
         self.utility: type[UtilityBase] = _select_utility(utility)
         self.username: str = username
         self.password: str = password
-        self.account_id: str | None = account_id
+        self.account_id: str = account_id
         self.user_id: str | None = None
         self.access_token: str | None = None
         return None
@@ -237,11 +250,15 @@ class Bidgely:
     async def async_fetch(
         self,
         measurement: str,
-        mode: str,
-        start: datetime | None = datetime.fromtimestamp(967231641),
-        end: datetime | None = datetime.now(),
+        mode: AggregateType | str,
+        start: datetime | None,
+        end: datetime | None,
         skip_itemization: bool | None = True,
     ) -> list[CostRead]:
+        if start is None:
+            start = datetime.fromtimestamp(967231641)
+        if end is None:
+            end = datetime.now()
         url = (
             "https://naapi-read.bidgely.com"
             "/v2.0/dashboard/users/"
@@ -259,7 +276,7 @@ class Bidgely:
         }
         h = {"authorization": f"Bearer {self.access_token}"}
 
-        result = []
+        result: list[CostRead] = []
         try:
             async with self.session.get(url, params=ps, headers=h) as resp:
                 reads = await resp.json()
@@ -322,19 +339,19 @@ class Bidgely:
 
         match mode:
             case AggregateType.MONTH:
-                result = await self.async_fetch(
+                results = await self.async_fetch(
                     measurement, mode, start, end, skip_itemization
                 )
             case AggregateType.DAY:
                 n_months = (end - start).days // 30
                 tasks = []
                 for i in range(n_months):
-                    months = 30 * (i + 1)
-                    single = await self.async_fetch(
+                    days = 30 * (i + 1)
+                    single = self.async_fetch(
                         measurement,
                         mode,
                         start,
-                        start + timedelta(days=months),
+                        start + timedelta(days=days),
                     )
                     tasks.append(single)
                 result = await asyncio.gather(*tasks)

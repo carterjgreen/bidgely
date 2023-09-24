@@ -1,5 +1,6 @@
 """AWS SRP"""
 # https://github.com/dotKrad/hass-fpl/blob/master/custom_components/fpl/aws_srp.py
+import asyncio
 import base64
 import binascii
 import datetime
@@ -8,7 +9,9 @@ import hashlib
 import hmac
 import os
 import re
+from typing import Any, Final
 
+import botocore
 import boto3
 
 
@@ -32,34 +35,34 @@ n_hex = (
     + "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF"
 )
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L49
-g_hex = "2"
-info_bits = bytearray("Caldera Derived Key", "utf-8")
+G_HEX: Final[str] = "2"
+INFO_BITS: Final[bytearray] = bytearray("Caldera Derived Key", "utf-8")
 
 
-def hash_sha256(buf):
+def hash_sha256(buf: bytes) -> str:
     """AuthenticationHelper.hash"""
     a = hashlib.sha256(buf).hexdigest()
     return (64 - len(a)) * "0" + a
 
 
-def hex_hash(hex_string):
+def hex_hash(hex_string: str) -> str:
     return hash_sha256(bytearray.fromhex(hex_string))
 
 
-def hex_to_long(hex_string):
+def hex_to_long(hex_string: str | bytes) -> int:
     return int(hex_string, 16)
 
 
-def long_to_hex(long_num):
+def long_to_hex(long_num: int) -> str:
     return "%x" % long_num
 
 
-def get_random(nbytes):
+def get_random(nbytes: int) -> int:
     random_hex = binascii.hexlify(os.urandom(nbytes))
     return hex_to_long(random_hex)
 
 
-def pad_hex(long_int):
+def pad_hex(long_int: int | str) -> str:
     """
     Converts a Long integer (or hex string) to hex format padded with zeroes for hashing
     :param {Long integer|String} long_int Number or string to pad.
@@ -76,7 +79,7 @@ def pad_hex(long_int):
     return hash_str
 
 
-def compute_hkdf(ikm, salt):
+def compute_hkdf(ikm: bytes, salt: bytes) -> bytes:
     """
     Standard hkdf algorithm
     :param {Buffer} ikm Input key material.
@@ -85,12 +88,12 @@ def compute_hkdf(ikm, salt):
     @private
     """
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
-    info_bits_update = info_bits + bytearray(chr(1), "utf-8")
+    info_bits_update = INFO_BITS + bytearray(chr(1), "utf-8")
     hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()
     return hmac_hash[:16]
 
 
-def calculate_u(big_a, big_b):
+def calculate_u(big_a: int, big_b: int) -> int:
     """
     Calculate the client's value U which is the hash of A and B
     :param {Long integer} big_a Large A value.
@@ -111,14 +114,14 @@ class AWSSRP(object):
 
     def __init__(
         self,
-        username,
-        password,
-        pool_id,
-        client_id,
-        pool_region=None,
-        client=None,
-        client_secret=None,
-        loop=None,
+        username: str,
+        password: str,
+        pool_id: str,
+        client_id: str,
+        loop: asyncio.AbstractEventLoop,
+        pool_region: str | None = None,
+        client: str | None = None,
+        client_secret: str | None = None,
     ):
         if pool_region is not None and client is not None:
             raise ValueError(
@@ -135,13 +138,13 @@ class AWSSRP(object):
             client if client else boto3.client("cognito-idp", region_name=pool_region)
         )
         self.big_n = hex_to_long(n_hex)
-        self.g = hex_to_long(g_hex)
-        self.k = hex_to_long(hex_hash("00" + n_hex + "0" + g_hex))
+        self.g = hex_to_long(G_HEX)
+        self.k = hex_to_long(hex_hash("00" + n_hex + "0" + G_HEX))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
         self.loop = loop
 
-    def generate_random_small_a(self):
+    def generate_random_small_a(self) -> int:
         """
         helper function to generate a random big integer
         :return {Long integer} a random value.
@@ -149,7 +152,7 @@ class AWSSRP(object):
         random_long_int = get_random(128)
         return random_long_int % self.big_n
 
-    def calculate_a(self):
+    def calculate_a(self) -> int:
         """
         Calculate the client's public value A = g^a%N
         with the generated random number a
@@ -162,7 +165,9 @@ class AWSSRP(object):
             raise ValueError("Safety check for A failed")
         return big_a
 
-    def get_password_authentication_key(self, username, password, server_b_value, salt):
+    def get_password_authentication_key(
+        self, username: str, password: str, server_b_value: int, salt: int
+    ) -> bytes:
         """
         Calculates final hkdf based on computed S value, computed U value, and the key
         :param {String} username Username.
@@ -187,7 +192,7 @@ class AWSSRP(object):
         )
         return hkdf
 
-    def get_auth_params(self):
+    def get_auth_params(self) -> dict[str, str]:
         auth_params = {
             "USERNAME": self.username,
             "SRP_A": long_to_hex(self.large_a_value),
@@ -203,12 +208,12 @@ class AWSSRP(object):
         return auth_params
 
     @staticmethod
-    def get_secret_hash(username, client_id, client_secret):
+    def get_secret_hash(username: str, client_id: str, client_secret: str) -> str:
         message = bytearray(username + client_id, "utf-8")
         hmac_obj = hmac.new(bytearray(client_secret, "utf-8"), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
-    def process_challenge(self, challenge_parameters):
+    def process_challenge(self, challenge_parameters: dict[str, Any]) -> dict[str, Any]:
         user_id_for_srp = challenge_parameters["USER_ID_FOR_SRP"]
         salt_hex = challenge_parameters["SALT"]
         srp_b_hex = challenge_parameters["SRP_B"]
@@ -247,9 +252,14 @@ class AWSSRP(object):
             )
         return response
 
-    async def authenticate_user(self, client=None):
+    async def authenticate_user(
+        self, client: botocore.client.BaseClient | None = None
+    ) -> dict[str, Any]:
         """authenticate user"""
-        boto_client = self.client or client
+        if client is None:
+            boto_client = self.client
+        else:
+            boto_client = client
         auth_params = self.get_auth_params()
 
         response = await self.loop.run_in_executor(
@@ -273,11 +283,6 @@ class AWSSRP(object):
                     ChallengeResponses=challenge_response,
                 ),
             )
-            # tokens = boto_client.respond_to_auth_challenge(
-            #    ClientId=self.client_id,
-            #    ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-            #    ChallengeResponses=challenge_response,
-            # )
 
             if tokens.get("ChallengeName") == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
                 raise ForceChangePasswordException(
@@ -290,8 +295,13 @@ class AWSSRP(object):
                 "The %s challenge is not supported" % response["ChallengeName"]
             )
 
-    def set_new_password_challenge(self, new_password, client=None):
-        boto_client = self.client or client
+    def set_new_password_challenge(
+        self, new_password: str, client: botocore.client.BaseClient | None = None
+    ) -> dict[str, Any]:
+        if client is None:
+            boto_client = self.client
+        else:
+            boto_client = client
         auth_params = self.get_auth_params()
         response = boto_client.initiate_auth(
             AuthFlow="USER_SRP_AUTH",
