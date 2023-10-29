@@ -239,6 +239,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/endpoint"
+  /2.1/utilityBillingCycles/utility/{pilot-id}/identifier/{bc-code}:
+    get:
+      summary: idk yet
+      tags: [no-hydro-ottawa]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pilot-id
+          in: path
+          required: true
+          description: Bidgely Pilot ID
+          schema:
+            type: integer
+        - name: bc-code
+          in: path
+          required: true
+          description: Bidgely Billing Cycle code
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                    description: request uuid
+                    example: 3035a610-bb52-48e7-8378-01209d4de5c6
+                  payload:
+                    type: string
+                    description: sessionID
+                    example: 1605689742299v1DAkZ9QX2gtLeWKQA-jKCUtneyQPSu_CSwKbCCM05ex2qznCUFSLXDch6vz2au2LdLPAMZawrS0eMryXDm2SVMS==
+                  error:
+                    type: string
+                    nullable: true
+                    example: null
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/defaultError"
 
   /v2.0/user-auth/cipher:
     get:
